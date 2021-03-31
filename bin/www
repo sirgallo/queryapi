@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+const app = require('../app')
+const debug = require('debug')('queryapi:server')
+const http = require('http')
+
+const cluster = require('cluster')
+const os = require('os')
+
+const numOfCpus = os.cpus().length
+
+let workers = []
+
+const normalizePort = (val) => {
+    const port = parseInt(val, 10)
+  
+    if (isNaN(port)) {
+        return val
+    }
+    if (port >= 0) {
+        return port
+    }
+  
+    return false
+}
+
+const setUpExpress = () => {
+    app.server = http.createServer(app)
+  
+    app.server.listen(port, () => {
+        console.log(`Worker ${process.pid} listening on port ${port}`)
+    })
+
+    app.on('error', (appErr, appCtx) => {
+        console.error('app error', appErr.stack);
+        console.error('on url', appCtx.req.url);
+        console.error('with headers', appCtx.req.headers);
+    })  
+}
+
+const setUpWorkers = () => {
+    console.log('Welcome to Sight API, version 0.2')
+    console.log('')
+    console.log(`Master node setting up ${numOfCpus} workers.`)
+    console.log('')
+
+    for(let cpu = 0; cpu < numOfCpus; cpu++) {
+        workers.push(cluster.fork())
+        
+        workers[cpu].on('message', message => {
+            console.log(message)
+        })
+    }
+
+    cluster.on('online', worker => {
+        console.log(`Worker ${worker.process.pid} is online.`)
+    })
+
+    cluster.on('exit', (worker, code, signal) => {
+        console.log(`Worker ${worker.process.pid} died with code ${code} and ${signal}.`)
+        console.log('Starting new worker.')
+        cluster.fork()
+        workers.push(cluster.fork())
+        workers[workers.length - 1].on('message', message => {
+            console.log(message)
+        })
+    })
+
+}
+
+const setUpServer = (isClusterRequired) => {
+    if(isClusterRequired && cluster.isMaster) {
+        setUpWorkers()
+    }
+    else {
+        setUpExpress()
+    }
+}
+
+const port = normalizePort(process.env.PORT || '5679')
+app.set('port', port)
+
+setUpServer(true)

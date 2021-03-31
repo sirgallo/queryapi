@@ -1,0 +1,26 @@
+{
+  "name": "queryapi",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "athena-express": "^6.0.4",
+    "aws-sdk": "^2.851.0",
+    "bcrypt": "^5.0.0",
+    "cluster": "^0.7.7",
+    "compression": "^1.7.4",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dotenv": "^8.2.0",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^3.6.4",
+    "morgan": "~1.9.1",
+    "mysql2": "^2.2.5",
+    "node-fetch": "^2.6.1",
+    "os": "^0.1.1"
+  }
+}
