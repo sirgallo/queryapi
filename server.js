@@ -1,11 +1,7 @@
-const debug = require('debug')('queryapi:server')
+require('dotenv').config({ path: '.env' })
 const http = require('http')
-
 const cluster = require('cluster')
 const os = require('os')
-
-require('dotenv').config({ path: '.env' })
-
 const createError = require('http-errors')
 const express = require('express')
 const path = require('path')
@@ -13,8 +9,8 @@ const cookieParser = require('cookie-parser')
 const logger = require('morgan')
 const compression = require('compression')
 
+// routes
 const queryRouter = require('./routes/query')
-//const usersRouter = require('./routes/users')
 const trieRouter = require('./routes/trie')
 
 const normalizePort = (val) => {
