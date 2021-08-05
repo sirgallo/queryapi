@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 
-const Trie = require('../public/hint/Trie')
+const Trie = require('../hint/Trie')
 
 router.post('/test', (req, res, next) => {
     console.log('')

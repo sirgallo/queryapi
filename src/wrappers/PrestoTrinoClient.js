@@ -1,6 +1,6 @@
 const fetch = require('node-fetch')
 
-const HttpClient = require ('../wrappers/HttpClient')
+const HttpClient = require ('./HttpClient')
 const httpRequest = require('../requests/HttpRequest')
 const httpMethods = require('../requests/HttpMethods')
 

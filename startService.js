@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-const Server = require('./server')
+const Server = require('./src/core/server')
 
 // routes
-const queryRouter = require('./routes/query')
-const trieRouter = require('./routes/trie')
+const queryRouter = require('./src/routes/query')
+const trieRouter = require('./src/routes/trie')
 
 const routes = [
     { path: '/query', router: queryRouter },

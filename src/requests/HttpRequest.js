@@ -1,4 +1,4 @@
-const httpMethods = require('../requests/HttpMethods')
+const httpMethods = require('./HttpMethods')
 
 class HttpRequest {
     constructor(method, headers, body = undefined) {
