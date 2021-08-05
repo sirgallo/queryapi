@@ -23,6 +23,7 @@ const normalizePort = (val) => {
 
 class Server {
     port = normalizePort(process.env.PORT)
+    ip = os.networkInterfaces()['eth0'][0].address
 
     numOfCpus = process.env.CPUS || os.cpus().length
     name = process.env.NAME
@@ -50,9 +51,10 @@ class Server {
     }
 
     setUpWorkers () {
+        
         console.log(`Welcome to ${this.name}, version ${this.version}`)
         console.log('')
-        console.log(`Master node setting up ${this.numOfCpus} workers.`)
+        console.log(`Server @${this.ip} setting up ${this.numOfCpus} CPUs as workers.`)
         console.log('')
 
         for(let cpu = 0; cpu < this.numOfCpus; cpu++) {
@@ -64,7 +66,7 @@ class Server {
         }
 
         cluster.on('online', worker => {
-            console.log(`Worker ${worker.process.pid} is online.`)
+            console.log(`Workers ${worker.process.pid} is online.`)
         })
 
         cluster.on('exit', (worker, code, signal) => {
