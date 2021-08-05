@@ -20,7 +20,7 @@ const httpMethods = require('../requests/HttpMethods')
         }
 */
 
-router.post('/presto', (req, res, next) => {
+router.post('/presto', async (req, res, next) => {
     console.log('')
     console.log(`Reached /query/presto route on API on Worker ${process.pid}`)
     console.log('')
@@ -39,18 +39,17 @@ router.post('/presto', (req, res, next) => {
     let request = new httpRequest(httpMethods.post, headers, presto.query)
 
     const prestoCli = new prestoTrinoCli(presto.prestohost, presto.prestoport, path, request.request)
-    prestoCli.client()
-        .then(data => {
-            if(data.hasOwnProperty('message')) {
-                res.status(404).send({'message': message, 'query': presto.query})
-            }
-            else {
-                res.status(200).send({'message': 'success', 'data': data, 'query': presto.query})
-            }
-        })
-        .catch(err => {
-            res.status(404).send({'message': err})
-        })
+    try {
+        let data = await prestoCli.client()
+        if(data.hasOwnProperty('message')) {
+            res.status(404).send({ 'message': message, 'query': presto.query })
+        }
+        else {
+            res.status(200).send({ 'message': 'success', 'data': data, 'query': presto.query })
+        }
+    } catch (err) {
+        res.status(404).send({'message': err})
+    }
 })
 
 /*
@@ -65,7 +64,7 @@ router.post('/presto', (req, res, next) => {
         }
 */
 
-router.post('/trino', (req, res, next) => {
+router.post('/trino', async (req, res, next) => {
     console.log('')
     console.log(`Reached /query/trino route on API on Worker ${process.pid}`)
     console.log('')
@@ -84,18 +83,17 @@ router.post('/trino', (req, res, next) => {
     let request = new httpRequest(httpMethods.post, headers, req.query)
 
     const trinoCli = new prestoTrinoCli(trino.trinohost, trino.trinoport, path, request.request)
-    trinoCli.client()
-        .then(data => {
-            if(data.hasOwnProperty('message')) {
-                res.status(404).json({'message': message, 'query': trino.query})
-            }
-            else {
-                res.status(200).json({'message': 'success', 'data': data, 'query': trino.query})
-            }
-        })
-        .catch(err => {
-            res.status(404).send({'message': err})
-        })
+    try {
+        let data = await trinoCli.client()
+        if(data.hasOwnProperty('message')) {
+            res.status(404).json({'message': message, 'query': trino.query})
+        }
+        else {
+            res.status(200).json({'message': 'success', 'data': data, 'query': trino.query})
+        }
+    } catch (err) {
+        res.status(404).send({'message': err})
+    }
 })
 
 /*
@@ -110,7 +108,7 @@ router.post('/trino', (req, res, next) => {
         }
 */
 
-router.post('/mariadb', (req, res, next) => {
+router.post('/mariadb', async (req, res, next) => {
     console.log('')
     console.log(`Reached /query/mariadb route on API on Worker ${process.pid}`)
     console.log('')
@@ -118,16 +116,13 @@ router.post('/mariadb', (req, res, next) => {
     const maria = req.body
 
     const mariaDb = new mariaDBCli(maria.mariahost, maria.mariaport, maria.mariauser, maria.mariapassword, maria.mariadatabase)
-    mariaDb.query(maria.query)
-        .then(data => {
-            mariaDb.close()
-                .then(() => {
-                    res.status(200).send(JSON.parse(JSON.stringify({'data': data, 'query': maria.query})))
-                })
-        })
-        .catch(err => {
-            res.status(404).send({'message': err})
-        })
+    try {
+        let data = await mariaDb.query(maria.query)
+        await mariaDb.close()
+        res.status(200).send(JSON.parse(JSON.stringify({ 'data': data, 'query': maria.query })))
+    } catch (err) {
+        res.status(404).send({ 'message': err })
+    }
 })
 
 /*
@@ -144,7 +139,7 @@ router.post('/mariadb', (req, res, next) => {
         }
 */
 
-router.post('/athena', (req, res, next) => {
+router.post('/athena', async (req, res, next) => {
     console.log('')
     console.log(`Reached /query/athena route on API on Worker ${process.pid}`)
     console.log('')
@@ -152,14 +147,12 @@ router.post('/athena', (req, res, next) => {
     const ath = req.body
 
     const athena = new athenaCli(ath.awscreds.region, ath.awscreds.accessKeyId, ath.awscreds.secrectAccessKey, ath.s3, ath.db)
-
-    athena.getAthenaResults(ath.query)
-        .then(data => {
-            res.status(200).json({'data': data, 'query': ath.query})
-        })
-        .catch(err => {
-            res.status(404).json({'message': err})
-        })
+    try {
+        let data = await athena.getAthenaResults(ath.query)
+        res.status(200).json({ 'data': data, 'query': ath.query })
+    } catch (err) {
+        res.status(404).json({'message': err})
+    }
 })
 
 module.exports = router
