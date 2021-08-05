@@ -5,35 +5,27 @@ const httpRequest = require('../requests/HttpRequest')
 const httpMethods = require('../requests/HttpMethods')
 
 class PrestoTrinoClient extends HttpClient {
-    async client() {
-        let data = {
-            columns: [],
-            data: []
-        }
+    data = {
+        columns: [],
+        data: []
+    }
+    continue = new httpRequest(httpMethods.get)
 
+    async client() {
         try {
             console.log(`Beginning query run on Worker ${process.pid} on PrestoTrinoClient...`)
             
-            let response = await this.response(this.endpoint, this.request, data)
+            await this.response(this.endpoint, this.request)
 
-            if (response.hasOwnProperty('message')) {
-                reserr = {
-                    message: response.message
-                }
-                return reserr
+            let jsonres = {
+                columns: this.data.columns[0],
+                data: this.data.data
             }
-            else {
-                let jsonres = {
-                    columns: response.columns[0],
-                    data: response.data
-                }
 
-                console.log('')
-                console.log(`Ending run on Worker ${process.pid} PrestoTrinoClient. Results returned.`)
-                console.log('')
-
-                return jsonres
-            }
+            console.log('')
+            console.log(`Ending run on Worker ${process.pid} PrestoTrinoClient. Results returned.`)
+            console.log('')
+            return jsonres
         }
         catch (err) {
             console.log(`Error Log: ${err}`)
@@ -41,35 +33,36 @@ class PrestoTrinoClient extends HttpClient {
         }
     }
 
-    async response(endpoint, req, data) {
-        let res = await this.reqEndpoint(endpoint, req)
+    async response(endpoint, req) {
+        try {
+            let res = await this.reqEndpoint(endpoint, req)
 
-        if (res.hasOwnProperty('error')) {
-            console.log(res.error)
-            return res.error
-        }
-
-        if (res.hasOwnProperty('status')) {
-            console.log('Current Status: ' + res.status)
-        }
-
-        if(res.hasOwnProperty('columns') && res.hasOwnProperty('data')) {
-            console.log('...I see columns and data...working on it...')
-            data.columns.push(res.columns)
-            data.data.push(res.data)
-        }
-        else if(res.hasOwnProperty('data')) {
-            console.log('...I see just data...working on it...')
-            data.data.push(res.data)
-        }
+            //  check for errors
+            if(res.hasOwnProperty('error')) {
+                console.log(res.error)
+                throw Error(res.error)
+            }
+            //  add to the data and columns fields for the
+            //  return data that will be handled on the front end
+            //  set up this way to handle returning duplicate columns
+            if(res.hasOwnProperty('columns') && res.hasOwnProperty('data')) {
+                console.log('...I see columns and data...working on it...')
+                this.data.columns.push(res.columns)
+                this.data.data.push(res.data)
+            }
+            else if(res.hasOwnProperty('data')) {
+                console.log('...I see just data...working on it...')
+                this.data.data.push(res.data)
+            }
     
-        if(res.hasOwnProperty('nextUri')) {
-            console.log(`...going to next URI at: ${res.nextUri}...`)
-            let getNextUri = new httpRequest(httpMethods.get)
-            return this.response(res.nextUri, getNextUri.request, data)
+            if(res.hasOwnProperty('nextUri')) {
+                console.log('...going to next URI at: ' + res.nextUri + "...")
+                await this.response(res.nextUri, this.continue)
+            }
+        } catch(err) {
+            console.log(err)
+            throw Error(err)
         }
-
-        return data
     }
 
     async reqEndpoint(endpoint, req) {
@@ -78,7 +71,8 @@ class PrestoTrinoClient extends HttpClient {
             return await response.json()
         }
         catch (err) {
-            return err
+            console.log(err)
+            return { error: err}
         }
     }
 }

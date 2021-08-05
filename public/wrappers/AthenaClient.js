@@ -27,7 +27,7 @@ class AthenaClient {
             getStats: this.getStats
 
         }
-        const athenaExpress = new AthenaExpress(athenaExpressConfig)
+        return new AthenaExpress(athenaExpressConfig)
     }
 
     async getAthenaResults(query) {

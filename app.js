@@ -1,3 +1,9 @@
+const debug = require('debug')('queryapi:server')
+const http = require('http')
+
+const cluster = require('cluster')
+const os = require('os')
+
 require('dotenv').config({ path: '.env' })
 
 const createError = require('http-errors')
@@ -11,37 +17,104 @@ const queryRouter = require('./routes/query')
 //const usersRouter = require('./routes/users')
 const trieRouter = require('./routes/trie')
 
-const app = express()
+const normalizePort = (val) => {
+    const port = parseInt(val, 10)
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'jade')
+    if (isNaN(port)) {
+        return val
+    }
+    if (port >= 0) {
+        return port
+    }
+    return false
+}
 
-app.use(logger('dev'))
-app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
-app.use(cookieParser())
-app.use(express.static(path.join(__dirname, 'public')))
-app.use(compression())
+class Server {
+    app = ''
 
-app.use('/query', queryRouter)
-//app.use('/users', usersRouter);
-app.use('/trie', trieRouter)
+    numOfCpus = process.env.CPUS || os.cpus().length
+    workers = []
+    port = normalizePort(process.env.PORT)
+    
+    constructor() {
+        this.app = express()
+    }
 
-// catch 404 and forward to error handler
-app.use((req, res, next) => {
-  next(createError(404))
-})
+    setUpExpress () {
+        this.app.server = http.createServer(this.app)
+    
+        this.app.server.listen(this.port, () => {
+            console.log(`Worker ${process.pid} listening on port ${this.port}`)
+        })
 
-// error handler
-app.use((err, req, res, next) => {
-  // set locals, only providing error in development
-  res.locals.message = err.message
-  res.locals.error = req.app.get('env') === 'development' ? err : {}
+        this.app.on('error', (appErr, appCtx) => {
+            console.error('app error', appErr.stack);
+            console.error('on url', appCtx.req.url);
+            console.error('with headers', appCtx.req.headers);
+        })  
+    }
 
-  // render the error page
-  res.status(err.status || 500)
-  res.render('error')
-})
+    setUpWorkers () {
+        console.log('Welcome to Sight API, version 0.2')
+        console.log('')
+        console.log(`Master node setting up ${this.numOfCpus} workers.`)
+        console.log('')
 
-module.exports = app
+        for(let cpu = 0; cpu < this.numOfCpus; cpu++) {
+            this.workers.push(cluster.fork())
+            
+            this.workers[cpu].on('message', message => {
+                console.log(message)
+            })
+        }
+
+        cluster.on('online', worker => {
+            console.log(`Worker ${worker.process.pid} is online.`)
+        })
+
+        cluster.on('exit', (worker, code, signal) => {
+            console.log(`Worker ${worker.process.pid} died with code ${code} and ${signal}.`)
+            console.log('Starting new worker.')
+            cluster.fork()
+            this.workers.push(cluster.fork())
+            this.workers[this.workers.length - 1].on('message', message => {
+                console.log(message)
+            })
+        })
+    }
+
+    run(isClusterRequired) {
+        this.app.set('port', this.port)
+
+        this.app.use(logger('dev'))
+        this.app.use(express.json())
+        this.app.use(express.urlencoded({ extended: false }))
+        this.app.use(cookieParser())
+        this.app.use(express.static(path.join(__dirname, 'public')))
+        this.app.use(compression())
+
+        this.app.use('/query', queryRouter)
+        this.app.use('/trie', trieRouter)
+
+        // catch 404 and forward to error handler
+        this.app.use((req, res, next) => {
+            next(createError(404))
+        })
+
+        // error handler
+        this.app.use((err, req, res, next) => {
+            // set locals, only providing error in development
+            res.locals.message = err.message
+            res.locals.error = req.this.app.get('env') === 'development' ? err : {}
+            
+            res.status(err.status || 500).json({ error: err.message })
+        })
+
+        if(isClusterRequired && cluster.isMaster)
+            this.setUpWorkers()
+        else
+            this.setUpExpress()
+    }
+}
+
+module.exports = Server

@@ -31,10 +31,14 @@ class MongoDBClient extends HttpClient{
         return docs
     }
 
-    async read(doc) {
+    async findOne(doc) {
         return doc
     }
 
+    async findMany() {
+        return true
+    }
+    
     close() {
         this.client.close()
     }
