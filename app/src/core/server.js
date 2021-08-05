@@ -50,7 +50,7 @@ class Server {
     }
 
     setUpWorkers () {
-        console.log(`Welcome to ${this.name} API, version ${this.version}`)
+        console.log(`Welcome to ${this.name}, version ${this.version}`)
         console.log('')
         console.log(`Master node setting up ${this.numOfCpus} workers.`)
         console.log('')
