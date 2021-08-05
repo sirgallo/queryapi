@@ -1,12 +1,12 @@
 const express = require('express')
 const router = express.Router()
 
-const prestoTrinoCli = require('../wrappers/PrestoTrinoClient')
-const athenaCli = require('../wrappers/AthenaClient')
-const mariaDBCli = require('../wrappers/MariaDBClient')
+const prestoTrinoCli = require('../core/wrappers/PrestoTrinoClient')
+const athenaCli = require('../core/wrappers/AthenaClient')
+const mariaDBCli = require('../core/wrappers/MariaDBClient')
 
-const httpRequest = require('../requests/HttpRequest')
-const httpMethods = require('../requests/HttpMethods')
+const httpRequest = require('../core/requests/HttpRequest')
+const httpMethods = require('../core/requests/HttpMethods')
 
 /*
     Request Body: 

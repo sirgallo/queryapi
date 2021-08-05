@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Maria = require('../wrappers/MariaDBClient')
+const Maria = require('../core/wrappers/MariaDBClient')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
