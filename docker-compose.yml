@@ -1,0 +1,31 @@
+version: "3"
+services:
+    queryapi:
+        image: queryapi_img
+        build:
+            context: ./app
+        ports:
+            - '5679'
+        environment:
+            - NODE_ENV=docker
+            - NODE_OPTIONS="--max-old-space-size=4096"
+        volumes:
+            - queryapidata:/usr/src/app
+        networks:
+            - queryapinetwork
+    nginx:
+        image: nginx:latest
+        container_name: nginx_inst
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+        ports: 
+            - '2026:2026'
+        networks:
+            - queryapinetwork
+        depends_on:
+            - queryapi
+networks:
+    queryapinetwork:
+        driver: bridge
+volumes:
+    queryapidata:

@@ -22,11 +22,12 @@ const normalizePort = (val) => {
 }
 
 class Server {
-    app = ''
     port = normalizePort(process.env.PORT)
-    routes = []
 
     numOfCpus = process.env.CPUS || os.cpus().length
+    name = process.env.NAME
+    version = process.env.VERSION
+
     workers = []
 
     constructor(routes) {
@@ -49,7 +50,7 @@ class Server {
     }
 
     setUpWorkers () {
-        console.log('Welcome to Sight API, version 0.2')
+        console.log(`Welcome to ${this.name} API, version ${this.version}`)
         console.log('')
         console.log(`Master node setting up ${this.numOfCpus} workers.`)
         console.log('')

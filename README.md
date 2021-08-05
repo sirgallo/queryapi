@@ -1,10 +1,7 @@
-# Query API for Schemestack
-## A Complete Refactor
+## Note for docker-compose
 
-The Node.js based backend for Scheme has been completely rewritten using ES6 classes and Javascript best practices.
+docker-compose will run the query api as a service behind nginx, which is acting as a load balancer. To start the service, run:
 
-Building off of the original API, the newer version is now multi-threaded, utilizing the node cluster library to create a distributed Coordinator/Worker based architecture. 
+    docker-compose up --build --scale queryapi=N
 
-The backend now supports multiple datasources, up from just PrestoDB on the original. There is now support for MariaDB/MySQL, TrinoDB, PrestoDB, Amazon Athena, with MongoDB support on the way. 
-
-Besides being run purely with Node.js, the API still has docker support and can be accessed on port 5679.
+where *N* is the number of replicas of the queryapi service to run.
