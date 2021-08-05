@@ -9,10 +9,6 @@ const cookieParser = require('cookie-parser')
 const logger = require('morgan')
 const compression = require('compression')
 
-// routes
-const queryRouter = require('./routes/query')
-const trieRouter = require('./routes/trie')
-
 const normalizePort = (val) => {
     const port = parseInt(val, 10)
 
@@ -27,13 +23,15 @@ const normalizePort = (val) => {
 
 class Server {
     app = ''
+    port = normalizePort(process.env.PORT)
+    routes = []
 
     numOfCpus = process.env.CPUS || os.cpus().length
     workers = []
-    port = normalizePort(process.env.PORT)
-    
-    constructor() {
+
+    constructor(routes) {
         this.app = express()
+        this.routes = routes
     }
 
     setUpExpress () {
@@ -89,9 +87,9 @@ class Server {
         this.app.use(express.static(path.join(__dirname, 'public')))
         this.app.use(compression())
 
-        this.app.use('/query', queryRouter)
-        this.app.use('/trie', trieRouter)
-
+        for (const route of this.routes) 
+            this.app.use(route.path, route.router)
+            
         // catch 404 and forward to error handler
         this.app.use((req, res, next) => {
             next(createError(404))
