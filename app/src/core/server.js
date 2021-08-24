@@ -36,50 +36,6 @@ class Server {
         this.routes = routes
     }
 
-    setUpExpress () {
-        this.app.server = http.createServer(this.app)
-    
-        this.app.server.listen(this.port, () => {
-            console.log(`Worker ${process.pid} listening on port ${this.port}`)
-        })
-
-        this.app.on('error', (appErr, appCtx) => {
-            console.error('app error', appErr.stack);
-            console.error('on url', appCtx.req.url);
-            console.error('with headers', appCtx.req.headers);
-        })  
-    }
-
-    setUpWorkers () {
-        
-        console.log(`Welcome to ${this.name}, version ${this.version}`)
-        console.log('')
-        console.log(`Server @${this.ip} setting up ${this.numOfCpus} CPUs as workers.`)
-        console.log('')
-
-        for(let cpu = 0; cpu < this.numOfCpus; cpu++) {
-            this.workers.push(cluster.fork())
-            
-            this.workers[cpu].on('message', message => {
-                console.log(message)
-            })
-        }
-
-        cluster.on('online', worker => {
-            console.log(`Workers ${worker.process.pid} is online.`)
-        })
-
-        cluster.on('exit', (worker, code, signal) => {
-            console.log(`Worker ${worker.process.pid} died with code ${code} and ${signal}.`)
-            console.log('Starting new worker.')
-            cluster.fork()
-            this.workers.push(cluster.fork())
-            this.workers[this.workers.length - 1].on('message', message => {
-                console.log(message)
-            })
-        })
-    }
-
     run(isClusterRequired) {
         this.app.set('port', this.port)
 
@@ -107,10 +63,47 @@ class Server {
             res.status(err.status || 500).json({ error: err.message })
         })
 
-        if(isClusterRequired && cluster.isMaster)
+        if(isClusterRequired && cluster.isMaster) {
             this.setUpWorkers()
+            console.log(this.workers)
+        }
         else
-            this.setUpExpress()
+            this.setUpServer()
+    }
+
+    setUpServer () {
+        this.app.listen(this.port, () => {
+            console.log(`Server ${process.pid} listening on port ${this.port}`)
+        })
+    }
+
+    setUpWorkers () {
+        console.log(`Welcome to ${this.name}, version ${this.version}`)
+        console.log('')
+        console.log(`Server @${this.ip} setting up ${this.numOfCpus} CPUs as workers.`)
+        console.log('')
+
+        for(let cpu = 0; cpu < this.numOfCpus; cpu++) {
+            this.workers.push(cluster.fork())
+            
+            this.workers[cpu].on('message', message => {
+                console.log(message)
+            })
+        }
+
+        cluster.on('online', worker => {
+            console.log(`Worker ${worker.process.pid} is online.`)
+        })
+
+        cluster.on('exit', (worker, code, signal) => {
+            console.log(`Worker ${worker.process.pid} died with code ${code} and ${signal}.`)
+            console.log('Starting new worker.')
+            cluster.fork()
+            this.workers.push(cluster.fork())
+            this.workers[this.workers.length - 1].on('message', message => {
+                console.log(message)
+            })
+        })
     }
 }
 

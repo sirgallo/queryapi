@@ -72,7 +72,7 @@ class PrestoTrinoClient extends HttpClient {
         }
         catch (err) {
             console.log(err)
-            return { error: err}
+            return { error: err }
         }
     }
 }

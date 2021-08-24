@@ -16,7 +16,7 @@ services:
         restart: always
         healthcheck:
             test: curl --fail http://localhost:5679/poll || kill 1
-            interval: 30s
+            interval: 45s
             timeout: 10s
             retries: 3
             start_period: 30s
